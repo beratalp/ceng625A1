@@ -33,7 +33,7 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=10)
     # train without any feature selection or extraction
     # first: knn
-    knn_1 = KNeighborsClassifier(n_neighbors=5)
+    knn_1 = KNeighborsClassifier(n_neighbors=11)
     knn_1.fit(X_train, y_train)
     print("KNN without feature selection completed.")
     # second: svm
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     svm_1.fit(X_train, y_train)
     print("SVM without feature selection completed.")
     # third: random forest
-    rf_1 = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=10)
+    rf_1 = RandomForestClassifier(n_estimators=1000, max_depth=10, random_state=10)
     rf_1.fit(X_train, y_train)
     print("Random Forest without feature selection completed.")
     # now, train with feature extraction using PCA
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     X_test_pca = pca1.fit_transform(X_test)
     print("PCA completed.")
     # first: knn
-    knn_2 = KNeighborsClassifier(n_neighbors=5)
+    knn_2 = KNeighborsClassifier(n_neighbors=11)
     knn_2.fit(X_train_pca, y_train)
     print("KNN with PCA feature extraction completed.")
     # second: svm
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     svm_2.fit(X_train_pca, y_train)
     print("SVM with PCA feature extraction completed.")
     # third: random forest
-    rf_2 = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=10)
+    rf_2 = RandomForestClassifier(n_estimators=1000, max_depth=10, random_state=10)
     rf_2.fit(X_train_pca, y_train)
     print("Random Forest with PCA feature extraction completed.")
     # now, train with feature selection using pearson correlation
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     X_train_corr = X_train[:, most_correlated_features]
     X_test_corr = X_test[:, most_correlated_features]
     # first: knn
-    knn_3 = KNeighborsClassifier(n_neighbors=5)
+    knn_3 = KNeighborsClassifier(n_neighbors=11)
     knn_3.fit(X_train_corr, y_train)
     print("KNN with correlation feature selection completed.")
     # second: svm
@@ -81,14 +81,15 @@ if __name__ == '__main__':
     svm_3.fit(X_train_corr, y_train)
     print("SVM with correlation feature selection completed.")
     # third: random forest
-    rf_3 = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=10)
+    rf_3 = RandomForestClassifier(n_estimators=1000, max_depth=10, random_state=10)
     rf_3.fit(X_train_corr, y_train)
-    print("Random Forest with correlation feature selection completed.")
+    # print("Random Forest with correlation feature selection completed.")
     # now, we train with feature selection using information gain method
-    X_train_info_gain = SelectKBest(mutual_info_classif, k=13).fit_transform(X_train, y_train)
-    X_test_info_gain = SelectKBest(mutual_info_classif, k=13).fit_transform(X_test, y_test)
+    most_info_gainer_features = mutual_info_classif(X_train, y_train) > 0.01
+    X_train_info_gain = X_train[:, most_info_gainer_features]
+    X_test_info_gain = X_test[:, most_info_gainer_features]
     # first: knn
-    knn_4 = KNeighborsClassifier(n_neighbors=5)
+    knn_4 = KNeighborsClassifier(n_neighbors=11)
     knn_4.fit(X_train_info_gain, y_train)
     print("KNN with information gain feature selection completed.")
     # second: svm
@@ -96,14 +97,14 @@ if __name__ == '__main__':
     svm_4.fit(X_train_info_gain, y_train)
     print("SVM with information gain feature selection completed.")
     # third: random forest
-    rf_4 = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=10)
+    rf_4 = RandomForestClassifier(n_estimators=1000, max_depth=10, random_state=10)
     rf_4.fit(X_train_info_gain, y_train)
     print("Random Forest with information gain feature selection completed.")
     # now, we train with both correlation and information gain
     X_train_hybrid = SelectKBest(mutual_info_classif, k=5).fit_transform(X_train_corr, y_train)
     X_test_hybrid = SelectKBest(mutual_info_classif, k=5).fit_transform(X_test_corr, y_test)
     # first: knn
-    knn_5 = KNeighborsClassifier(n_neighbors=5)
+    knn_5 = KNeighborsClassifier(n_neighbors=11)
     knn_5.fit(X_train_hybrid, y_train)
     print("KNN with hybrid feature selection completed.")
     # second: svm
@@ -111,7 +112,7 @@ if __name__ == '__main__':
     svm_5.fit(X_train_hybrid, y_train)
     print("SVM with hybrid feature selection completed.")
     # third: random forest
-    rf_5 = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=10)
+    rf_5 = RandomForestClassifier(n_estimators=1000, max_depth=10, random_state=10)
     rf_5.fit(X_train_hybrid, y_train)
     print("Random Forest with hybrid feature selection completed.")
     # now, we test the models
@@ -146,7 +147,11 @@ if __name__ == '__main__':
     plt.show()
     print("Random Forest without feature selection accuracy: ", accuracy_score(y_test, y_pred_rf_1))
     print("Random Forest without feature selection classification report:\n", classification_report(y_test, y_pred_rf_1))
-    RocCurveDisplay.from_predictions(y_test, y_pred_rf_1).plot()
+    RocCurveDisplay.from_predictions(y_test, y_pred_rf_1, ).plot()
+    plt.title("Random Forest without feature selection")
+    plt.show()
+    plt.figure(figsize=(10, 10))
+    plt.show()
     # second: models with PCA feature extraction
     # KNN
     y_pred_knn_2 = knn_2.predict(X_test_pca)
@@ -175,10 +180,11 @@ if __name__ == '__main__':
     rf_2_conf_matrix = confusion_matrix(y_test, y_pred_rf_2)
     ConfusionMatrixDisplay(rf_2_conf_matrix).plot()
     plt.title("Random Forest with PCA feature extraction")
-    plt.show()
     print("Random Forest with PCA feature extraction accuracy: ", accuracy_score(y_test, y_pred_rf_2))
     print("Random Forest with PCA feature extraction classification report:\n", classification_report(y_test, y_pred_rf_2))
     RocCurveDisplay.from_predictions(y_test, y_pred_rf_2).plot()
+    plt.title("Random Forest with PCA feature extraction")
+    plt.show()
     # third: models with correlation feature selection
     # KNN
     y_pred_knn_3 = knn_3.predict(X_test_corr)
